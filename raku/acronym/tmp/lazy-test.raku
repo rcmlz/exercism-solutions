@@ -1,0 +1,1 @@
+say "AB CD".split(' ').lazy.map( { $_.comb.lazy.first }).eager.join.lc;

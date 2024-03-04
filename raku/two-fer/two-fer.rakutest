@@ -1,0 +1,27 @@
+#!/usr/bin/env raku
+use Test;
+use lib $?FILE.IO.dirname; #`[Look for the module inside the same directory as this test file.]
+use TwoFer;
+
+cmp-ok(
+    two-fer(),
+    "eq",
+    "One for you, one for me.",
+    "no name given",
+);
+
+cmp-ok(
+    two-fer("Alice"),
+    "eq",
+    "One for Alice, one for me.",
+    "a name given",
+);
+
+cmp-ok(
+    two-fer("Bob"),
+    "eq",
+    "One for Bob, one for me.",
+    "another name given",
+);
+
+done-testing;
