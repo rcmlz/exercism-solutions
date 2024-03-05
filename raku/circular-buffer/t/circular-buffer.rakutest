@@ -1,0 +1,18 @@
+#!/usr/bin/env raku
+use v6.*;
+use Test;
+use Solution;
+
+# start like: raku -I lib -M Solution t/circular-buffer.rakutest
+
+my $buff = Circular-Buffer.new(capacity => 7);
+
+ok $buff ~~ Circular-Buffer-Interface;
+
+say $buff.write(2,3,4,'a', 'b', 'c', 'd'); 	# 7
+say $buff.read(1);    					   	# (2)
+say $buff.read(3);    						# (3 4 a)
+say $buff.write('X'); 						# 1
+say $buff.read(1);    						# (b) »
+say $buff.write('X', <q r s>, 'Y'); 		# 3
+say $buff.read($buff.elems);			    # (c d X X (q r s) Y) »
