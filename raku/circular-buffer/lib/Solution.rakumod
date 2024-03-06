@@ -55,7 +55,7 @@ class Circular-Buffer does Circular-Buffer-Interface is export {
     has UInt $.elems = 0;
     has UInt $!read-pointer = 0;
     has UInt $!write-pointer = 0;
-    has @.buffer = [];
+    has @!buffer = [];
 
     multi method clear( --> Bool) {
         $!elems = 0;
