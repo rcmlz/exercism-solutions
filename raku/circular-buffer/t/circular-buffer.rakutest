@@ -1,154 +1,426 @@
 #!/usr/bin/env raku
-use v6.*;
 use Test;
-use Solution; # unless loaded already from command line via -M
+use lib $?FILE.IO.parent(2).add('lib');
+use CircularBuffer;
 
-# start manually like: raku -I lib -M Solution t/circular-buffer.rakutest
+subtest "reading empty buffer should fail" => { # begin: 28268ed4-4ff3-45f3-820e-895b44d53dfa
+    my $buffer := CircularBuffer.new( :capacity(1) );
 
-class Shape {}
-class Square is Shape { has UInt $.len is required is rw }
-class Circle is Shape { has UInt $.radius is required is rw }
-class Tiangle is Shape { has UInt $.height is required is rw }
-class Rhombus is Shape { has UInt $.side is required is rw }
-class Rectangle is Shape { has UInt $.minor is required is rw }
-my $square = Square.new(len => 10);
-my $circle = Circle.new(radius => 10);
-my $tiangle = Tiangle.new(height => 10);
-my $rhombus = Rhombus.new(side => 10);
-my $rectangle = Rectangle.new(minor => 10);
+    throws-like(
+        { $buffer.read },
+        X::CircularBuffer::BufferIsEmpty,
+        "read error",
+    );
+}; # end: 28268ed4-4ff3-45f3-820e-895b44d53dfa
 
-#`«
-subtest {
-    my $buff = Circular-Buffer.new(capacity => 2);
-    does-ok $buff, Circular-Buffer-Interface;
-    is $buff.write($square, $circle), 2;
-    does-ok $buff.read, Square;
-    does-ok $buff.read, Circle;
-    is $buff.write($circle), 1;
-    ok $buff.clear;
-    dies-ok { $buff.read }
-    # test reference leaking or capturing
-    my $square2 = Square.new(len => 5);
-    is $buff.write($square2), 1;
-    $square2.len = 10; # change local copy
-    is $square2.len, 10; # check local copy
-    is $buff.read.len, 5, "compare local to stored - reference leaked/captured?";
-}, "Interface implemented? All working? Quick Development Overview!";
-»
+subtest "can read an item just written" => { # begin: 2e6db04a-58a1-425d-ade8-ac30b5f318f3
+    my $buffer := CircularBuffer.new( :capacity(1) );
 
-subtest {
-    # begin: 28268ed4-4ff3-45f3-820e-895b44d53dfa
-    my $buff = Circular-Buffer.new(capacity => 1);
-    dies-ok { $buff.read }
-}, "reading empty buffer should fail"; # end: 28268ed4-4ff3-45f3-820e-895b44d53dfa
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
 
-subtest { # begin: 2e6db04a-58a1-425d-ade8-ac30b5f318f3
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    cmp-ok $buff.read, "eqv", $square;
-}, "can read an item just written"; # end: 2e6db04a-58a1-425d-ade8-ac30b5f318f3
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+}; # end: 2e6db04a-58a1-425d-ade8-ac30b5f318f3
 
-subtest { # begin: 90741fe8-a448-45ce-be2b-de009a24c144
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    dies-ok { $buff.read }
-},"each item may only be read once"; # end: 90741fe8-a448-45ce-be2b-de009a24c144
+subtest "each item may only be read once" => { # begin: 90741fe8-a448-45ce-be2b-de009a24c144
+    my $buffer := CircularBuffer.new( :capacity(1) );
 
-subtest { # begin: be0e62d5-da9c-47a8-b037-5db21827baa7
-    my $buff = Circular-Buffer.new(capacity => 2);
-    is $buff.write($square), 1;
-    is $buff.write($circle), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    cmp-ok $buff.read, "eqv", $circle;
-},"items are read in the order they are written"; # end: be0e62d5-da9c-47a8-b037-5db21827baa7
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
 
-subtest { # begin: 2af22046-3e44-4235-bfe6-05ba60439d38
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    dies-ok { $buff.write($square) }
-},"full buffer can't be written to"; # end: 2af22046-3e44-4235-bfe6-05ba60439d38
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
 
-subtest { # begin: 547d192c-bbf0-4369-b8fa-fc37e71f2393
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    is $buff.write($circle), 1;
-    cmp-ok $buff.read, "eqv", $circle;
-},"a read frees up capacity for another write"; # end: 547d192c-bbf0-4369-b8fa-fc37e71f2393
+    throws-like(
+        { $buffer.read },
+        X::CircularBuffer::BufferIsEmpty,
+        "read error",
+    );
+}; # end: 90741fe8-a448-45ce-be2b-de009a24c144
 
-subtest { # begin: 04a56659-3a81-4113-816b-6ecb659b4471
-    my $buff = Circular-Buffer.new(capacity => 3);
-    is $buff.write($square), 1;
-    is $buff.write($circle), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    is $buff.write($tiangle), 1;
-    cmp-ok $buff.read, "eqv", $circle;
-    cmp-ok $buff.read, "eqv", $tiangle;
-}, "read position is maintained even across multiple writes"; # end: 04a56659-3a81-4113-816b-6ecb659b4471
+subtest "items are read in the order they are written" => { # begin: be0e62d5-da9c-47a8-b037-5db21827baa7
+    my $buffer := CircularBuffer.new( :capacity(2) );
 
-subtest { # begin: 60c3a19a-81a7-43d7-bb0a-f07242b1111f
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    ok $buff.clear;
-    dies-ok { $buff.read }
-}, "items cleared out of buffer can't be read"; # end: 60c3a19a-81a7-43d7-bb0a-f07242b1111f
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
 
-subtest { # begin: 45f3ae89-3470-49f3-b50e-362e4b330a59
-    my $buff = Circular-Buffer.new(capacity => 1);
-    is $buff.write($square), 1;
-    ok $buff.clear;
-    is $buff.write($circle), 1;
-    cmp-ok $buff.read, "eqv", $circle;
-}, "clear frees up capacity for another write"; # end: 45f3ae89-3470-49f3-b50e-362e4b330a59
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
 
-subtest { # begin: e1ac5170-a026-4725-bfbe-0cf332eddecd
-    my $buff = Circular-Buffer.new(capacity => 1);
-    ok $buff.clear;
-    is $buff.write($square), 1;
-    cmp-ok $buff.read, "eqv", $square;
-}, "clear does nothing on empty buffer"; # end: e1ac5170-a026-4725-bfbe-0cf332eddecd
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
 
-subtest { # begin: 9c2d4f26-3ec7-453f-a895-7e7ff8ae7b5b
-    my $buff = Circular-Buffer.new(capacity => 2);
-    is $buff.write($square), 1;
-    is $buff.overwrite($circle), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    cmp-ok $buff.read, "eqv", $circle;
-}, "overwrite acts like write on non-full buffer"; # end: 9c2d4f26-3ec7-453f-a895-7e7ff8ae7b5b
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+}; # end: be0e62d5-da9c-47a8-b037-5db21827baa7
 
-subtest { # begin: 880f916b-5039-475c-bd5c-83463c36a147
-    my $buff = Circular-Buffer.new(capacity => 2);
-    is $buff.write($square), 1;
-    is $buff.write($circle), 1;
-    is $buff.overwrite($tiangle), 1;
-    cmp-ok $buff.read, "eqv", $circle;
-    cmp-ok $buff.read, "eqv", $tiangle;
-}, "overwrite replaces the oldest item on full buffer"; # end: 880f916b-5039-475c-bd5c-83463c36a147
+subtest "full buffer can't be written to" => { # begin: 2af22046-3e44-4235-bfe6-05ba60439d38
+    my $buffer := CircularBuffer.new( :capacity(1) );
 
-subtest { # begin: bfecab5b-aca1-4fab-a2b0-cd4af2b053c3
-    my $buff = Circular-Buffer.new(capacity => 3);
-    is $buff.write($square), 1;
-    is $buff.write($circle), 1;
-    is $buff.write($tiangle), 1;
-    cmp-ok $buff.read, "eqv", $square;
-    is $buff.write($rhombus), 1;
-    is $buff.overwrite($rectangle), 1;
-    cmp-ok $buff.read, "eqv", $tiangle;
-    cmp-ok $buff.read, "eqv", $rhombus;
-    cmp-ok $buff.read, "eqv", $rectangle;
-}, "overwrite replaces the oldest item remaining in buffer following a read"; # end: bfecab5b-aca1-4fab-a2b0-cd4af2b053c3
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
 
-subtest { # begin: 9cebe63a-c405-437b-8b62-e3fdc1ecec5a
-    my $buff = Circular-Buffer.new(capacity => 2);
-    ok $buff.clear;
-    is $buff.write($square), 1;
-    is $buff.write($circle), 1;
-    is $buff.overwrite($tiangle), 1;
-    is $buff.overwrite($rhombus), 1;
-    cmp-ok $buff.read, "eqv", $tiangle;
-    cmp-ok $buff.read, "eqv", $rhombus;
-    dies-ok { $buff.read };
-}, "initial clear does not affect wrapping around"; # end: 9cebe63a-c405-437b-8b62-e3fdc1ecec5a
+    throws-like(
+        { $buffer.write(2) },
+        X::CircularBuffer::BufferIsFull,
+        "write error",
+    );
+}; # end: 2af22046-3e44-4235-bfe6-05ba60439d38
+
+subtest "a read frees up capacity for another write" => { # begin: 547d192c-bbf0-4369-b8fa-fc37e71f2393
+    my $buffer := CircularBuffer.new( :capacity(1) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+}; # end: 547d192c-bbf0-4369-b8fa-fc37e71f2393
+
+subtest "read position is maintained even across multiple writes" => { # begin: 04a56659-3a81-4113-816b-6ecb659b4471
+    my $buffer := CircularBuffer.new( :capacity(3) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(3) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        3,
+        "read buffer",
+    );
+}; # end: 04a56659-3a81-4113-816b-6ecb659b4471
+
+subtest "items cleared out of buffer can't be read" => { # begin: 60c3a19a-81a7-43d7-bb0a-f07242b1111f
+    my $buffer := CircularBuffer.new( :capacity(1) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.clear },
+        "clear buffer",
+    );
+
+    throws-like(
+        { $buffer.read },
+        X::CircularBuffer::BufferIsEmpty,
+        "read error",
+    );
+}; # end: 60c3a19a-81a7-43d7-bb0a-f07242b1111f
+
+subtest "clear frees up capacity for another write" => { # begin: 45f3ae89-3470-49f3-b50e-362e4b330a59
+    my $buffer := CircularBuffer.new( :capacity(1) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.clear },
+        "clear buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+}; # end: 45f3ae89-3470-49f3-b50e-362e4b330a59
+
+subtest "clear does nothing on empty buffer" => { # begin: e1ac5170-a026-4725-bfbe-0cf332eddecd
+    my $buffer := CircularBuffer.new( :capacity(1) );
+
+    lives-ok(
+        { $buffer.clear },
+        "clear buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+}; # end: e1ac5170-a026-4725-bfbe-0cf332eddecd
+
+subtest "overwrite acts like write on non-full buffer" => { # begin: 9c2d4f26-3ec7-453f-a895-7e7ff8ae7b5b
+    my $buffer := CircularBuffer.new( :capacity(2) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.overwrite(2) },
+        "overwrite buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+}; # end: 9c2d4f26-3ec7-453f-a895-7e7ff8ae7b5b
+
+subtest "overwrite replaces the oldest item on full buffer" => { # begin: 880f916b-5039-475c-bd5c-83463c36a147
+    my $buffer := CircularBuffer.new( :capacity(2) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.overwrite(3) },
+        "overwrite buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        2,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        3,
+        "read buffer",
+    );
+}; # end: 880f916b-5039-475c-bd5c-83463c36a147
+
+subtest "overwrite replaces the oldest item remaining in buffer following a read" => { # begin: bfecab5b-aca1-4fab-a2b0-cd4af2b053c3
+    my $buffer := CircularBuffer.new( :capacity(3) );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(3) },
+        "write buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        1,
+        "read buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(4) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.overwrite(5) },
+        "overwrite buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        3,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        4,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        5,
+        "read buffer",
+    );
+}; # end: bfecab5b-aca1-4fab-a2b0-cd4af2b053c3
+
+subtest "initial clear does not affect wrapping around" => { # begin: 9cebe63a-c405-437b-8b62-e3fdc1ecec5a
+    my $buffer := CircularBuffer.new( :capacity(2) );
+
+    lives-ok(
+        { $buffer.clear },
+        "clear buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(1) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.write(2) },
+        "write buffer",
+    );
+
+    lives-ok(
+        { $buffer.overwrite(3) },
+        "overwrite buffer",
+    );
+
+    lives-ok(
+        { $buffer.overwrite(4) },
+        "overwrite buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        3,
+        "read buffer",
+    );
+
+    cmp-ok(
+        $buffer.read,
+        "==",
+        4,
+        "read buffer",
+    );
+
+    throws-like(
+        { $buffer.read },
+        X::CircularBuffer::BufferIsEmpty,
+        "read error",
+    );
+}; # end: 9cebe63a-c405-437b-8b62-e3fdc1ecec5a
+
+subtest "multiple writes" => { # begin:
+    my $buffer := CircularBuffer.new( :capacity(3) );
+
+    lives-ok(
+            { $buffer.write(1) },
+            "write buffer",
+                      );
+
+    lives-ok(
+            { $buffer.overwrite(2) },
+            "overwrite buffer",
+                      );
+
+    lives-ok(
+            { $buffer.write(3) },
+            "write buffer",
+                          );
+    skip;
+    cmp-ok(
+            $buffer.read(3),
+            "==",
+            (1, 2, 3),
+            "read buffer",
+                    );
+
+}; # end:
 
 done-testing;
