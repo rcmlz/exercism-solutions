@@ -11,8 +11,7 @@ sub allergic-to(Allergen :$item, UInt :$score --> Bool) is cached is export {
 }
 
 sub list-allergies(UInt $score --> Set[Allergen]) is cached is export {
-    my %result is Set[Allergen] = Allergen::
-                                     .values
-                                     .grep: -> $item { allergic-to(:$item, :$score) };
-    return %result;
+    Set[Allergen].new(Allergen::
+            .values
+            .grep: -> $item { allergic-to(:$item, :$score) })
 }
