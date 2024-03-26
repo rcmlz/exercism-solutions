@@ -6,7 +6,7 @@ class ListItem {
 
 #| simple Linked List implementation - do not change!;
 class LinkedList {
-	has ListItem $.ancor is rw = ListItem.new;
+	has ListItem $.ancor = ListItem.new;
 	has ListItem $.last-elem is rw;
 	method add (ListItem $item) {
 		with $!last-elem {
