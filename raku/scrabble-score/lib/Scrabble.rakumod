@@ -1,4 +1,4 @@
-unit module Scrabble;
+unit module Scrabble:ver<2>:auth<exercism:rcmlz>:api<1>;
 
 constant %LETTERS = { 1 => <A E I O U L N R S T>,
                       2 => <D G>,
@@ -9,5 +9,5 @@ constant %LETTERS = { 1 => <A E I O U L N R S T>,
                       10 => <Q Z> }.invert;
 
 sub scrabble-score (Str $word --> UInt) is export {
-    sum $word.uc.comb.Bag.map: { %LETTERS{.key} × .value }
+    sum $word.uc.comb.map: { %LETTERS{$_}  }
 }
