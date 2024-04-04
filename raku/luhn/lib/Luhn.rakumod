@@ -1,5 +1,7 @@
+constant @doubled = 0, 2, 4, 6, 8, 1, 3, 5, 7, 9;
+
 multi is-luhn-valid (Str $input --> Bool) is export {
-    (.elems > 1) and (.reverse »*» (1, 2) andthen .map(*.comb.sum).sum %% 10)
+    (.elems > 1) and (.reverse.pairs.map({ .key %% 2 ?? .value !! @doubled[.value] }).sum %% 10)
     with $input.comb(/<:Number>/)
 }
 
