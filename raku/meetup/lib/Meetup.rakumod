@@ -18,7 +18,7 @@ grammar MeetUp {
 
 class PreProcessor {
     method TOP ($match) {
-        $match.make: { weekday-of-month => $match<weekday-of-month><position>.made || $match<weekday-of-month><description>,
+        $match.make: { weekday-of-month => $match<weekday-of-month><position>.made // $match<weekday-of-month><description>,
                        day-of-week      => Day-of-week::{$match<day-of-week>}.value.UInt,
                        month            => Month::{$match<month>}.value.UInt,
                        year             => $match<year>.UInt
@@ -31,9 +31,9 @@ class PreProcessor {
 
 sub meetup-date ($desc --> Date) is export {
     my %match = MeetUp.parse($desc, actions => PreProcessor.new).made;
-    my $first-of-month = Date.new(%match<year>, %match<month>, 1);
+    my $date = Date.new(%match<year>, %match<month>, 1);
 
-    my \potential-dates = lazy grep { .day-of-week == %match<day-of-week> }, $first-of-month..$first-of-month.last-date-in-month;
+    my \potential-dates = lazy grep { .day-of-week == %match<day-of-week> }, $date..$date.last-date-in-month;
 
     given %match<weekday-of-month> {
         when UInt     { potential-dates.first: *.weekday-of-month == %match<weekday-of-month> }
