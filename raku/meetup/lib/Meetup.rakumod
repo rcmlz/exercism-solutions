@@ -33,12 +33,12 @@ sub meetup-date ($desc --> Date) is export {
     my %match = MeetUp.parse($desc, actions => PreProcessor.new).made;
     my $date = Date.new(%match<year>, %match<month>, 1);
 
-    my \potential-dates = grep { .day-of-week == %match<day-of-week> }, $date..$date.last-date-in-month;
+    my \potential-dates = lazy grep { .day-of-week == %match<day-of-week> }, $date..$date.last-date-in-month;
 
     given %match<weekday-of-month> {
         when UInt     { potential-dates.first: *.weekday-of-month == %match<weekday-of-month> }
-        when 'Last'   { potential-dates.tail }
-        when 'Teenth' { potential-dates.first: 12 < *.day < 20 }
+        when 'Last'   { potential-dates.eager.tail }
+        when 'Teenth' { potential-dates.first: 12 < *.day }
         default       { fail 'unkown weekday-of-month:' ~ %match<weekday-of-month> }
     }
 }
