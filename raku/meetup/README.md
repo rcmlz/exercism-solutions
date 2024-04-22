@@ -63,4 +63,4 @@ The Saturday that has a number ending in '-teen' is August 15, 1953.
 
 ### Based on
 
-Jeremy Hinegardner mentioned a Boulder meetup that happens on the Wednesteenth of every month - https://twitter.com/copiousfreetime
+Jeremy Hinegardner mentioned a Boulder meetup that happens on the Wednesteenth of every month - http://www.copiousfreetime.org/

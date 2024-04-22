@@ -1,7 +1,7 @@
 #!/usr/bin/env raku
 
 sub letter-frequencies (+@texts) {
-    bag @texts.race.map: *.lc.comb(/<:L>/)
+    bag @texts.race( batch => 1, degree => $*KERNEL.cpu-cores-but-one ).map: *.lc.comb(/<:L>/)
 }
 
 sub letter-frequencies-single-core (+@texts) {
@@ -9,18 +9,18 @@ sub letter-frequencies-single-core (+@texts) {
 }
 
 sub MAIN {
-    run-benchmark    
+    run-benchmark
 }
 
 sub run-benchmark(:$runs = 3) {
     my $alphabet = ('A'..'Z') ∪ ('a'..'z') ∪ <ä ö ü Ä Ö Ü è ß ç>;
     my @text-count = 10, 100, 1000;
-    my @words-per-text = 10, 100, 100;
+    my @words-per-text = 10, 1000, 100;
     my @word-len = 10, 100, 100;
     
     say "\nSpeedup of e.g. '1.1' indicates that parallel execution\nruns 10% faster than single core execution.\nSpeedup '2.0' indicates double speed.\nA speedup smaller than 1 indicates that\nparallel execution is actually slower.\n";
     
-    for ^$runs -> $i {
+    for ^($runs-1) -> $i {
         say "Run: " ~ $i + 1;
         
         say "generating data";
