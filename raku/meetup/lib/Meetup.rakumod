@@ -31,9 +31,9 @@ class PreProcessor {
 
 sub meetup-date ($desc --> Date) is export {
     my %match = MeetUp.parse($desc, actions => PreProcessor.new).made;
-    my $date = Date.new(%match<year>, %match<month>, 1);
+    my $first-of-month = Date.new(%match<year>, %match<month>, 1);
 
-    my \potential-dates = lazy grep { .day-of-week == %match<day-of-week> }, $date..$date.last-date-in-month;
+    my \potential-dates = lazy grep { .day-of-week == %match<day-of-week> }, $first-of-month..$first-of-month.last-date-in-month;
 
     given %match<weekday-of-month> {
         when UInt     { potential-dates.first: *.weekday-of-month == %match<weekday-of-month> }
