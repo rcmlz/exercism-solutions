@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use Test;
-use lib $?FILE.IO.dirname;
+use lib $?FILE.IO.parent(2).add('lib');
 use Hamming;
 
 cmp-ok( # begin: f6dcb64f-03b0-4b60-81b1-3c9dbf47e887

@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use Test;
-use lib $?FILE.IO.dirname;
+use lib $?FILE.IO.parent(2).add('lib');
 use IsbnVerifier;
 
 cmp-ok( # begin: 0caa3eac-d2e3-4c29-8df8-b188bc8c9292

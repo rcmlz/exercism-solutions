@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use Test;
-use lib $?FILE.IO.dirname;
+use lib $?FILE.IO.parent(2).add('lib');
 use AtbashCipher;
 
 cmp-ok( # begin: 2f47ebe1-eab9-4d6b-b3c6-627562a31c77
