@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use Test;
-use lib $?FILE.IO.dirname;
+use lib $?FILE.IO.parent(2).add('lib');
 use Matrix;
 
 cmp-ok( # begin: ca733dab-9d85-4065-9ef6-a880a951dafd
