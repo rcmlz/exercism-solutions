@@ -1,6 +1,6 @@
 #!/usr/bin/env raku
 use Test;
-use lib $?FILE.IO.dirname;
+use lib $?FILE.IO.parent(2).add('lib');
 use PascalsTriangle;
 
 cmp-ok( # begin: 9920ce55-9629-46d5-85d6-4201f4a4234d
