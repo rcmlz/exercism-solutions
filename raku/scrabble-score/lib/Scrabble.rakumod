@@ -1,13 +1,6 @@
-unit module Scrabble:ver<2>:auth<exercism:rcmlz>:api<1>;
+constant %score = <AEIOULNRST DG BCMP FHVWY K JX QZ>».comb
+             «=>» <1          2  3    4     5 8  10>».Int;
 
-constant %LETTERS = { 1 => <A E I O U L N R S T>,
-                      2 => <D G>,
-                      3 => <B C M P>,
-                      4 => <F H V W Y>,
-                      5 => <K>,
-                      8 => <J X>,
-                      10 => <Q Z> }.invert;
-
-sub scrabble-score (Str $word --> UInt) is export {
-    sum $word.uc.comb.map: { %LETTERS{$_}  }
+sub scrabble-score (Str:D $word --> UInt:D) is export {
+    $word.uc.comb».&(-> \letter { %score{letter} || 0 } ).sum
 }
